@@ -20,10 +20,13 @@ Python 3.11+; nenhuma dependência externa para o pipeline.
 python -m prospectai.pipeline generate --output data/synthetic --orders 1000 --seed 42
 python -m prospectai.pipeline load --input data/synthetic --db warehouse/retail.db
 python -m prospectai.pipeline report --db warehouse/retail.db
+python -m prospectai.pipeline export --db warehouse/retail.db --output output/gold
 python -m unittest discover -s tests -v
 ```
 
-Todos os comandos devem ser executados na raiz do repositório.
+Todos os comandos devem ser executados na raiz do repositório. Os três CSVs em `output/gold/` são a fonte de dados preparada para o projeto Power BI. Valores financeiros são expressos em **centavos inteiros**: divida por 100 no modelo de apresentação.
+
+A aba **Actions** executa testes, gera dados, processa Bronze/Silver/Gold, verifica se os totais de pedidos e receitas coincidem nas três dimensões e disponibiliza os arquivos no artefato `prospectai-gold-csv`. A execução só deve ser considerada validada quando o workflow mais recente estiver verde.
 
 ## Contrato dos dados
 
