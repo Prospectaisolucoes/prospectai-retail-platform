@@ -130,6 +130,30 @@ class RetailPipelineTests(unittest.TestCase):
         self.assertGreater(totals[0][0], 0)
         self.assertGreater(totals[0][1], 0)
 
+    def test_invalid_money_is_quarantined_without_polluting_gold(self):
+        self.append("payments", {
+            "payment_id": "90001", "order_id": "1", "amount": "NaN",
+            "payment_status": "paid", "updated_at": "2026-01-01T00:00:00",
+        })
+        self.append("payments", {
+            "payment_id": "90002", "order_id": "1", "amount": "Infinity",
+            "payment_status": "paid", "updated_at": "2026-01-01T00:00:00",
+        })
+        self.append("products", {
+            "product_id": "90001", "category": "Invalid",
+            "unit_price": "Infinity", "updated_at": "2026-01-01T00:00:00",
+        })
+        result = load(self.data, self.db)
+        self.assertEqual(result["rejected"], 4)
+        with sqlite3.connect(self.db) as con:
+            self.assertEqual(con.execute(
+                "SELECT COUNT(*) FROM rejects WHERE reason='invalid_amount'"
+            ).fetchone()[0], 3)
+            self.assertEqual(con.execute(
+                "SELECT COUNT(*) FROM silver_payments"
+            ).fetchone()[0], 200)
+        self.assertEqual(len(set(report(self.db)["gold"].values())), 1)
+
     def test_generator_is_deterministic(self):
         other = self.root / "other"
         generate(other, orders=200, seed=42)
