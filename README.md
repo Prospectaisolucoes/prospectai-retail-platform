@@ -16,9 +16,9 @@ Python 3.11+; nenhuma dependência externa para o pipeline.
 
 ## Dados de exemplo no GitHub
 
-A pasta [`data/sample/`](data/sample/) contém quatro CSVs **inteiramente fictícios**, prontos para inspeção e execução: `customers.csv`, `products.csv`, `orders.csv` e `payments.csv`.
+A pasta [`data/sample/`](data/sample/) contém quatro CSVs **inteiramente fictícios**, prontos para inspeção e execução: `customers.csv`, `products.csv`, `orders.csv` e `payments.csv`. O diretório mantém o nome `sample` por compatibilidade com o pipeline e o CI, mas agora contém um **dataset representativo de demonstração**, não uma amostra mínima.
 
-A amostra demonstra um pedido com **dois pagamentos confirmados** (R$ 50,00 + R$ 70,00), outro com pagamento de R$ 151,00, um pedido pendente e um pedido com cliente inexistente que deve ser rejeitado. O resultado esperado é **2 pedidos elegíveis, R$ 271,00 de receita e 1 rejeição**. Os CSVs maiores gerados pelo comando `generate` continuam fora do Git.
+O dataset contém **500 clientes, 120 produtos, 5.000 pedidos válidos e 6.106 pagamentos**, cobrindo todo o ano de 2025, múltiplas regiões e categorias, pedidos aprovados, pendentes e cancelados. Inclui **1.106 pedidos com múltiplos pagamentos confirmados** e **um pedido órfão intencional**, enviado à quarentena. Resultado esperado: **3.923 pedidos elegíveis, R$ 5.950.799,70 de receita confirmada e 1 rejeição**. Os valores são sintéticos, não receita real. Os CSVs maiores gerados pelo comando `generate` continuam fora do Git.
 
 Para executar somente a amostra:
 
@@ -56,7 +56,7 @@ Arquivos CSV: `customers`, `products`, `orders` e `payments`. Cada entidade tem 
 
 ## Qualidade e publicação
 
-O GitHub Actions executa os testes unitários, valida a amostra versionada (incluindo pagamentos múltiplos e rejeição de órfãos), processa 1.000 pedidos sintéticos e concilia as três views Gold antes de publicar o artefato `prospectai-gold-csv`. Os CSVs exportados são agregações alternativas; **não some receitas entre arquivos**.
+O GitHub Actions executa os testes unitários, valida o dataset versionado (incluindo 1.106 pedidos com pagamentos múltiplos, 5.000 pedidos válidos e rejeição de órfãos), processa 1.000 pedidos sintéticos e concilia as três views Gold antes de publicar o artefato `prospectai-gold-csv`. Os CSVs exportados são agregações alternativas; **não some receitas entre arquivos**.
 
 Este projeto é uma demonstração técnica com dados fictícios. O repositório não é um sistema de produção e não contém arquivo `.pbix` pronto. O contrato para o futuro relatório está em [docs/POWER_BI_HANDOFF.md](docs/POWER_BI_HANDOFF.md).
 
