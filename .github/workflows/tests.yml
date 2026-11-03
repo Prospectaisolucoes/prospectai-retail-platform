@@ -22,10 +22,14 @@ jobs:
           con = sqlite3.connect('warehouse/sample.db')
           for view in ('gold_daily_sales', 'gold_category_sales', 'gold_region_sales'):
               orders, revenue = con.execute(f'SELECT SUM(orders), SUM(revenue_cents) FROM {view}').fetchone()
-              assert (orders, revenue) == (2, 27100), (view, orders, revenue)
+              assert (orders, revenue) == (3923, 595079970), (view, orders, revenue)
           assert con.execute('SELECT COUNT(*) FROM rejects').fetchone()[0] == 1
-          assert con.execute('SELECT COUNT(*) FROM silver_payments WHERE order_id=1 AND payment_status="paid"').fetchone()[0] == 2
-          print('Sample CSV validated: 2 orders, R$271.00, 1 orphan rejected')
+          assert con.execute('SELECT COUNT(*) FROM silver_payments').fetchone()[0] == 6106
+          assert con.execute('SELECT COUNT(*) FROM silver_customers').fetchone()[0] == 500
+          assert con.execute('SELECT COUNT(*) FROM silver_products').fetchone()[0] == 120
+          assert con.execute('SELECT COUNT(*) FROM silver_orders').fetchone()[0] == 5000
+          assert con.execute('SELECT COUNT(*) FROM (SELECT order_id FROM silver_payments WHERE payment_status="paid" GROUP BY order_id HAVING COUNT(*) > 1)').fetchone()[0] == 1106
+          print('Retail dataset validated: 5000 orders, 6106 payments, 1 orphan rejected')
           PY
       - name: Generate synthetic dataset
         run: python -m prospectai.pipeline generate --output data/synthetic --orders 1000 --seed 42
