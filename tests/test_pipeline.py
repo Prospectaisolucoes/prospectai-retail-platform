@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from prospectai.pipeline import cents, connect, generate, load, report
+from prospectai.pipeline import cents, connect, export_gold, generate, load, report
 
 
 class RetailPipelineTests(unittest.TestCase):
@@ -113,6 +113,22 @@ class RetailPipelineTests(unittest.TestCase):
         for value in ("10.251", "-1", "NaN", "Infinity"):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 cents(value)
+
+    def test_gold_export_is_consistent_across_dimensions(self):
+        load(self.data, self.db)
+        folder = self.root / "exports"
+        result = export_gold(self.db, folder)
+        self.assertEqual(set(result), {"gold_daily_sales", "gold_category_sales", "gold_region_sales"})
+        totals = []
+        for view in result:
+            with (folder / f"{view}.csv").open(newline="", encoding="utf-8") as handle:
+                records = list(csv.DictReader(handle))
+            self.assertEqual(len(records), result[view])
+            totals.append((sum(int(r["orders"]) for r in records),
+                           sum(int(r["revenue_cents"]) for r in records)))
+        self.assertEqual(len(set(totals)), 1)
+        self.assertGreater(totals[0][0], 0)
+        self.assertGreater(totals[0][1], 0)
 
     def test_generator_is_deterministic(self):
         other = self.root / "other"
