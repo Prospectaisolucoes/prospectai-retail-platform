@@ -1,16 +1,41 @@
-name: Python tests
+name: Pipeline validation
 
 on:
   push:
   pull_request:
 
 jobs:
-  tests:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Run unit tests
+      - name: Unit and regression tests
         run: python -m unittest discover -s tests -v
+      - name: Generate synthetic dataset
+        run: python -m prospectai.pipeline generate --output data/synthetic --orders 1000 --seed 42
+      - name: Execute Bronze Silver Gold pipeline
+        run: python -m prospectai.pipeline load --input data/synthetic --db warehouse/retail.db
+      - name: Export Power BI datasets
+        run: python -m prospectai.pipeline export --db warehouse/retail.db --output output/gold
+      - name: Validate Gold reconciliation
+        run: |
+          python - <<'PY'
+          import csv
+          from pathlib import Path
+          totals = []
+          for name in ('gold_daily_sales', 'gold_category_sales', 'gold_region_sales'):
+              with (Path('output/gold') / f'{name}.csv').open(newline='') as f:
+                  rows = list(csv.DictReader(f))
+              totals.append((sum(int(r['orders']) for r in rows), sum(int(r['revenue_cents']) for r in rows)))
+          assert len(set(totals)) == 1, totals
+          assert totals[0][0] > 0 and totals[0][1] > 0, totals
+          print('Gold reconciliation OK:', totals[0])
+          PY
+      - name: Upload BI-ready exports
+        uses: actions/upload-artifact@v4
+        with:
+          name: prospectai-gold-csv
+          path: output/gold/*.csv
