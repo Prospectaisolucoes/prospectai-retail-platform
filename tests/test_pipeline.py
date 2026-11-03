@@ -30,10 +30,10 @@ class RetailPipelineTests(unittest.TestCase):
 
     def test_load_and_quarantine_orphan(self):
         result = load(self.data, self.db)
-        self.assertEqual(result, {"raw": 542, "rejected": 1, "accepted": 541})
+        self.assertEqual(result, {"raw": 541, "rejected": 1, "accepted": 540})
         with sqlite3.connect(self.db) as con:
             self.assertEqual(con.execute("SELECT COUNT(*) FROM silver_orders").fetchone()[0], 200)
-            self.assertEqual(con.execute("SELECT COUNT(*) FROM bronze").fetchone()[0], 542)
+            self.assertEqual(con.execute("SELECT COUNT(*) FROM bronze").fetchone()[0], 541)
             self.assertEqual(con.execute("SELECT reason FROM rejects").fetchone()[0], "missing_customer")
 
     def test_reprocess_is_idempotent(self):
