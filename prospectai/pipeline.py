@@ -29,6 +29,8 @@ def cents(value: str) -> int:
         if not amount.is_finite() or amount < 0 or amount.as_tuple().exponent < -2:
             raise ValueError("invalid_amount")
         result = int(amount * 100)
+        if result > 9223372036854775807:
+            raise ValueError("invalid_amount")
     except (InvalidOperation, ValueError, TypeError) as exc:
         raise ValueError("invalid_amount") from exc
     return result
@@ -39,6 +41,8 @@ def timestamp(value: str) -> str:
         dt = datetime.fromisoformat(value)
     except (ValueError, TypeError) as exc:
         raise ValueError("invalid_timestamp") from exc
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
     return dt.isoformat(timespec="seconds")
 
 
@@ -47,7 +51,7 @@ def positive_id(value: str) -> int:
         number = int(value)
     except (ValueError, TypeError) as exc:
         raise ValueError("invalid_id") from exc
-    if number <= 0:
+    if number <= 0 or number > 9223372036854775807:
         raise ValueError("invalid_id")
     return number
 
@@ -170,6 +174,7 @@ def connect(path: Path) -> sqlite3.Connection:
             WHERE o.status = 'approved'
             GROUP BY c.region;
     """)
+    con.commit()
     return con
 
 
@@ -262,6 +267,25 @@ def load(folder: Path, db: Path) -> dict[str, int]:
         con.close()
 
 
+def export_gold(db: Path, folder: Path) -> dict[str, int]:
+    """Export Power BI-ready, integer-cent Gold aggregates as CSV."""
+    folder.mkdir(parents=True, exist_ok=True)
+    con = connect(db)
+    result = {}
+    try:
+        for view in ("gold_daily_sales", "gold_category_sales", "gold_region_sales"):
+            cursor = con.execute(f"SELECT * FROM {view} ORDER BY 1")
+            rows = cursor.fetchall()
+            with (folder / f"{view}.csv").open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.writer(handle)
+                writer.writerow([item[0] for item in cursor.description])
+                writer.writerows(rows)
+            result[view] = len(rows)
+        return result
+    finally:
+        con.close()
+
+
 def report(db: Path) -> dict:
     con = connect(db)
     try:
@@ -288,6 +312,9 @@ def main() -> None:
     ingestion = commands.add_parser("load")
     ingestion.add_argument("--input", type=Path, required=True)
     ingestion.add_argument("--db", type=Path, required=True)
+    export = commands.add_parser("export")
+    export.add_argument("--db", type=Path, required=True)
+    export.add_argument("--output", type=Path, required=True)
     summary = commands.add_parser("report")
     summary.add_argument("--db", type=Path, required=True)
     args = parser.parse_args()
@@ -296,6 +323,8 @@ def main() -> None:
         print(json.dumps({"generated_orders": args.orders, "output": str(args.output)}))
     elif args.command == "load":
         print(json.dumps(load(args.input, args.db), sort_keys=True))
+    elif args.command == "export":
+        print(json.dumps(export_gold(args.db, args.output), sort_keys=True))
     else:
         print(json.dumps(report(args.db), sort_keys=True))
 
