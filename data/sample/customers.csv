@@ -1,0 +1,4 @@
+customer_id,customer_name,region,updated_at
+1,Cliente Exemplo 001,SP,2025-01-01T00:00:00
+2,Cliente Exemplo 002,RJ,2025-01-01T00:00:00
+3,Cliente Exemplo 003,BA,2025-01-01T00:00:00
