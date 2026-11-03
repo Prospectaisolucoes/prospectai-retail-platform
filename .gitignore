@@ -3,7 +3,9 @@ __pycache__/
 .pytest_cache/
 .venv/
 venv/
-data/
+data/*
+!data/sample/
+!data/sample/*.csv
 warehouse/
 *.db
 *.sqlite
