@@ -14,6 +14,20 @@ Plataforma demonstrativa de engenharia e análise de dados de varejo, com dados 
 
 Python 3.11+; nenhuma dependência externa para o pipeline.
 
+## Dados de exemplo no GitHub
+
+A pasta [`data/sample/`](data/sample/) contém quatro CSVs **inteiramente fictícios**, prontos para inspeção e execução: `customers.csv`, `products.csv`, `orders.csv` e `payments.csv`.
+
+A amostra demonstra um pedido com **dois pagamentos confirmados** (R$ 50,00 + R$ 70,00), outro com pagamento de R$ 151,00, um pedido pendente e um pedido com cliente inexistente que deve ser rejeitado. O resultado esperado é **2 pedidos elegíveis, R$ 271,00 de receita e 1 rejeição**. Os CSVs maiores gerados pelo comando `generate` continuam fora do Git.
+
+Para executar somente a amostra:
+
+```bash
+python -m prospectai.pipeline load --input data/sample --db warehouse/sample.db
+python -m prospectai.pipeline report --db warehouse/sample.db
+python -m prospectai.pipeline export --db warehouse/sample.db --output output/sample-gold
+```
+
 ## Execução rápida
 
 ```bash
@@ -40,9 +54,20 @@ Arquivos CSV: `customers`, `products`, `orders` e `payments`. Cada entidade tem 
 - Pagamentos `unpaid` não contribuem; pedidos pendentes/cancelados não contribuem.
 - As três dimensões Gold são visões alternativas da mesma receita, não devem ser somadas entre si.
 
+## Qualidade e publicação
+
+O GitHub Actions executa os testes unitários, valida a amostra versionada (incluindo pagamentos múltiplos e rejeição de órfãos), processa 1.000 pedidos sintéticos e concilia as três views Gold antes de publicar o artefato `prospectai-gold-csv`. Os CSVs exportados são agregações alternativas; **não some receitas entre arquivos**.
+
+Este projeto é uma demonstração técnica com dados fictícios. O repositório não é um sistema de produção e não contém arquivo `.pbix` pronto. O contrato para o futuro relatório está em [docs/POWER_BI_HANDOFF.md](docs/POWER_BI_HANDOFF.md).
+
 ## Estrutura
 
 ```text
+data/sample/
+  customers.csv
+  products.csv
+  orders.csv
+  payments.csv
 prospectai/
   __init__.py
   pipeline.py
