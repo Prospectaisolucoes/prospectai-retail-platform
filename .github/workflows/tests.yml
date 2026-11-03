@@ -14,6 +14,19 @@ jobs:
           python-version: '3.11'
       - name: Unit and regression tests
         run: python -m unittest discover -s tests -v
+      - name: Validate committed CSV sample and payment accounting
+        run: |
+          python -m prospectai.pipeline load --input data/sample --db warehouse/sample.db
+          python - <<'PY'
+          import sqlite3
+          con = sqlite3.connect('warehouse/sample.db')
+          for view in ('gold_daily_sales', 'gold_category_sales', 'gold_region_sales'):
+              orders, revenue = con.execute(f'SELECT SUM(orders), SUM(revenue_cents) FROM {view}').fetchone()
+              assert (orders, revenue) == (2, 27100), (view, orders, revenue)
+          assert con.execute('SELECT COUNT(*) FROM rejects').fetchone()[0] == 1
+          assert con.execute('SELECT COUNT(*) FROM silver_payments WHERE order_id=1 AND payment_status="paid"').fetchone()[0] == 2
+          print('Sample CSV validated: 2 orders, R$271.00, 1 orphan rejected')
+          PY
       - name: Generate synthetic dataset
         run: python -m prospectai.pipeline generate --output data/synthetic --orders 1000 --seed 42
       - name: Execute Bronze Silver Gold pipeline
