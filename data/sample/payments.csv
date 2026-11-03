@@ -1,0 +1,5 @@
+payment_id,order_id,amount,payment_status,updated_at
+1,1,50.00,paid,2025-01-02T12:00:00
+2,1,70.00,paid,2025-01-02T12:01:00
+3,2,151.00,paid,2025-01-03T12:00:00
+4,3,120.00,unpaid,2025-01-04T12:00:00
